@@ -1,0 +1,19 @@
+--- Python-3.2b1/configure.ac.orig	2010-12-12 16:18:42.000000000 +0000
++++ Python-3.2b1/configure.ac	2010-12-12 16:20:34.000000000 +0000
+@@ -879,13 +879,13 @@
+ 	    if test "$Py_DEBUG" = 'true' ; then
+ 		# Optimization messes up debuggers, so turn it off for
+ 		# debug builds.
+-		OPT="-g -O0 -Wall $STRICT_PROTO"
++		OPT="-g $CPPFLAGS $CFLAGS -Wall $STRICT_PROTO"
+ 	    else
+-		OPT="-g $WRAP -O3 -Wall $STRICT_PROTO"
++		OPT="-g $WRAP $CPPFLAGS $CFLAGS -Wall $STRICT_PROTO"
+ 	    fi
+ 	    ;;
+ 	*)
+-	    OPT="-O3 -Wall $STRICT_PROTO"
++	    OPT="$CPPFLAGS $CFLAGS -Wall $STRICT_PROTO"
+ 	    ;;
+ 	esac
+ 	case $ac_sys_system in
