@@ -141,7 +141,7 @@ Standard Python interface to the Tk GUI toolkit.
 %patch5 -p1
 %endif
 
-rm -r Modules/{expat,zlib,_ctypes/{darwin,libffi,libffi_arm_wince,libffi_msvc,libffi_osx}*}
+rm -r Modules/{expat,zlib,_ctypes/{darwin,libffi*}}
 
 %build
 %{__aclocal}
