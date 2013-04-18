@@ -22,7 +22,7 @@
 Summary:	Very high level scripting language with X interface
 Name:		python3
 Version:	%{py_ver}.0
-Release:	3
+Release:	4
 Epoch:		1
 License:	PSF
 Group:		Applications
@@ -34,6 +34,7 @@ Patch2:		%{name}-cflags.patch
 Patch3:		%{name}-lib64.patch
 Patch4:		%{name}-lib64-regex.patch
 Patch5:		%{name}-lib64-fix-for-test_install.patch
+Patch6:		%{name}-makefile-location.patch
 URL:		http://www.python.org/
 BuildRequires:	autoconf
 BuildRequires:	bzip2-devel
@@ -140,8 +141,9 @@ Standard Python interface to the Tk GUI toolkit.
 %patch4 -p1
 %patch5 -p1
 %endif
+%patch6 -p1
 
-rm -r Modules/{expat,zlib,_ctypes/{darwin,libffi*}}
+%{__rm} -r Modules/{expat,zlib,_ctypes/{darwin,libffi*}}
 
 %build
 %{__aclocal}
