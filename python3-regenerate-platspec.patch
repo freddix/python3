@@ -1,0 +1,120 @@
+diff -r d9893d13c628 Lib/plat-aix4/regen
+--- a/Lib/plat-aix4/regen	Sat Apr 06 09:40:02 2013 +0200
++++ b/Lib/plat-aix4/regen	Sat Apr 27 14:39:28 2013 -0700
+@@ -5,4 +5,4 @@
+         exit 1;;
+ esac
+ set -v
+-h2py.py -i '(u_long)' /usr/include/netinet/in.h
++python$EXE ../../Tools/scripts/h2py.py -i '(u_long)' /usr/include/netinet/in.h
+diff -r d9893d13c628 Lib/plat-linux/regen
+--- a/Lib/plat-linux/regen	Sat Apr 06 09:40:02 2013 +0200
++++ b/Lib/plat-linux/regen	Sat Apr 27 14:39:28 2013 -0700
+@@ -5,4 +5,4 @@
+ 	exit 1;;
+ esac
+ set -v
+-h2py -i '(u_long)' /usr/include/sys/types.h /usr/include/netinet/in.h /usr/include/dlfcn.h
++python$EXE ../../Tools/scripts/h2py.py -i '(u_long)' /usr/include/sys/types.h /usr/include/netinet/in.h /usr/include/dlfcn.h /usr/include/linux/cdrom.h
+diff -r d9893d13c628 Lib/plat-sunos5/regen
+--- a/Lib/plat-sunos5/regen	Sat Apr 06 09:40:02 2013 +0200
++++ b/Lib/plat-sunos5/regen	Sat Apr 27 14:39:28 2013 -0700
+@@ -5,5 +5,4 @@
+ 	exit 1;;
+ esac
+ set -v
+-h2py -i '(u_long)' /usr/include/sys/types.h /usr/include/netinet/in.h /usr/include/sys/stropts.h /usr/include/dlfcn.h
+-
++python$EXE ../../Tools/scripts/h2py.py -i '(u_long)' /usr/include/sys/types.h /usr/include/netinet/in.h /usr/include/sys/stropts.h /usr/include/dlfcn.h
+diff -r d9893d13c628 Lib/plat-unixware7/regen
+--- a/Lib/plat-unixware7/regen	Sat Apr 06 09:40:02 2013 +0200
++++ b/Lib/plat-unixware7/regen	Sat Apr 27 14:39:28 2013 -0700
+@@ -5,5 +5,5 @@
+ 	exit 1;;
+ esac
+ set -v
+-h2py -i '(u_long)' /usr/include/netinet/in.h
+-h2py /usr/include/sys/stropts.h
++python$EXE ../../Tools/scripts/h2py.py -i '(u_long)' /usr/include/netinet/in.h
++python$EXE ../../Tools/scripts/h2py.py /usr/include/sys/stropts.h
+diff -r d9893d13c628 Makefile.pre.in
+--- a/Makefile.pre.in	Sat Apr 06 09:40:02 2013 +0200
++++ b/Makefile.pre.in	Sat Apr 27 14:39:28 2013 -0700
+@@ -440,7 +440,7 @@
+ 
+ # Default target
+ all:		build_all
+-build_all:	$(BUILDPYTHON) oldsharedmods sharedmods gdbhooks Modules/_testembed
++build_all:	$(BUILDPYTHON) oldsharedmods sharedmods platformspecificmods gdbhooks Modules/_testembed
+ 
+ # Compile a binary with gcc profile guided optimization.
+ profile-opt:
+@@ -495,6 +495,26 @@
+ 	$(RUNSHARED) CC='$(CC)' LDSHARED='$(BLDSHARED)' OPT='$(OPT)' \
+ 		$(PYTHON_FOR_BUILD) $(srcdir)/setup.py $$quiet build
+ 
++# Build the platform-specific modules
++platformspecificmods: $(BUILDPYTHON) sharedmods
++	@PLATDIR=$(PLATDIR); \
++	if test ! -f $(srcdir)/Lib/$(PLATDIR)/regen; then \
++		$(INSTALL) -d $(srcdir)/Lib/$(PLATDIR); \
++		if test -f $(srcdir)/Lib/$${PLATDIR%?}/regen; then \
++			cp $(srcdir)/Lib/$${PLATDIR%?}/regen $(srcdir)/Lib/$(PLATDIR)/regen; \
++		else \
++			cp $(srcdir)/Lib/plat-generic/regen $(srcdir)/Lib/$(PLATDIR)/regen; \
++		fi \
++	fi
++	@EXE="$(BUILDEXE)"; export EXE; \
++	PATH="`pwd`:$$PATH"; export PATH; \
++	PYTHONPATH="`pwd`/Lib"; export PYTHONPATH; \
++	cd $(srcdir)/Lib/$(PLATDIR); \
++	$(RUNSHARED) ./regen || exit 1; \
++	for module in *.py; do \
++		$(RUNSHARED) $(BUILDPYTHON) -c "import py_compile; py_compile.compile('$$module', cfile='/dev/null', doraise=True)" || exit 1; \
++	done
++
+ # Build static library
+ # avoid long command lines, same as LIBRARY_OBJS
+ $(LIBRARY): $(LIBRARY_OBJS)
+@@ -1052,7 +1072,7 @@
+ 		unittest unittest/test unittest/test/testmock \
+ 		venv venv/scripts venv/scripts/posix \
+ 		curses pydoc_data $(MACHDEPS)
+-libinstall:	build_all $(srcdir)/Lib/$(PLATDIR) $(srcdir)/Modules/xxmodule.c
++libinstall:	build_all $(srcdir)/Modules/xxmodule.c
+ 	@for i in $(SCRIPTDIR) $(LIBDEST); \
+ 	do \
+ 		if test ! -d $(DESTDIR)$$i; then \
+@@ -1135,23 +1155,6 @@
+ 	-PYTHONPATH=$(DESTDIR)$(LIBDEST) $(RUNSHARED) \
+ 		$(PYTHON_FOR_BUILD) -m lib2to3.pgen2.driver $(DESTDIR)$(LIBDEST)/lib2to3/PatternGrammar.txt
+ 
+-# Create the PLATDIR source directory, if one wasn't distributed..
+-$(srcdir)/Lib/$(PLATDIR):
+-	mkdir $(srcdir)/Lib/$(PLATDIR)
+-	cp $(srcdir)/Lib/plat-generic/regen $(srcdir)/Lib/$(PLATDIR)/regen
+-	export PATH; PATH="`pwd`:$$PATH"; \
+-	export PYTHONPATH; PYTHONPATH="`pwd`/Lib"; \
+-	export DYLD_FRAMEWORK_PATH; DYLD_FRAMEWORK_PATH="`pwd`"; \
+-	export EXE; EXE="$(BUILDEXE)"; \
+-	if [ -n "$(MULTIARCH)" ]; then export MULTIARCH; MULTIARCH=$(MULTIARCH); fi; \
+-	export PYTHON_FOR_BUILD; \
+-	if [ "$(BUILD_GNU_TYPE)" = "$(HOST_GNU_TYPE)" ]; then \
+-	  PYTHON_FOR_BUILD="$(BUILDPYTHON)"; \
+-	else \
+-	  PYTHON_FOR_BUILD="$(PYTHON_FOR_BUILD)"; \
+-	fi; \
+-	cd $(srcdir)/Lib/$(PLATDIR); $(RUNSHARED) ./regen
+-
+ python-config: $(srcdir)/Misc/python-config.in
+ 	# Substitution happens here, as the completely-expanded BINDIR
+ 	# is not available in configure
+@@ -1466,7 +1469,7 @@
+ Python/thread.o: @THREADHEADERS@
+ 
+ # Declare targets that aren't real files
+-.PHONY: all build_all sharedmods oldsharedmods test quicktest
++.PHONY: all build_all sharedmods oldsharedmods platformspecificmods test quicktest
+ .PHONY: install altinstall oldsharedinstall bininstall altbininstall
+ .PHONY: maninstall libinstall inclinstall libainstall sharedinstall
+ .PHONY: frameworkinstall frameworkinstallframework frameworkinstallstructure

@@ -21,13 +21,13 @@
 
 Summary:	Very high level scripting language with X interface
 Name:		python3
-Version:	%{py_ver}.0
-Release:	4
+Version:	%{py_ver}.2
+Release:	2
 Epoch:		1
 License:	PSF
 Group:		Applications
 Source0:	http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
-# Source0-md5:	b3b2524f72409d919a4137826a870a8f
+# Source0-md5:	7dffe775f3bea68a44f762a3490e5e28
 Patch0:		%{name}-pythonpath.patch
 Patch1:		%{name}-opt.patch
 Patch2:		%{name}-cflags.patch
@@ -35,6 +35,10 @@ Patch3:		%{name}-lib64.patch
 Patch4:		%{name}-lib64-regex.patch
 Patch5:		%{name}-lib64-fix-for-test_install.patch
 Patch6:		%{name}-makefile-location.patch
+# from gentoo
+Patch7:		%{name}-regenerate-platspec.patch
+Patch8:		%{name}-distutils-cxx.patch
+Patch9:		%{name}-h2py-encoding.patch
 URL:		http://www.python.org/
 BuildRequires:	autoconf
 BuildRequires:	bzip2-devel
@@ -142,6 +146,9 @@ Standard Python interface to the Tk GUI toolkit.
 %patch5 -p1
 %endif
 %patch6 -p1
+%patch7 -p1
+%patch8 -p1
+%patch9 -p0
 
 %{__rm} -r Modules/{expat,zlib,_ctypes/{darwin,libffi*}}
 
@@ -347,11 +354,11 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/venv/__pycache__
 %{py_scriptdir}/venv/scripts
 
-%dir %{py_scriptdir}/config-%{py_abi}
-%{py_scriptdir}/config-%{py_abi}/Makefile
-%{py_scriptdir}/config-%{py_abi}/Setup
-%{py_scriptdir}/config-%{py_abi}/Setup.config
-%{py_scriptdir}/config-%{py_abi}/Setup.local
+%dir %{py_libdir}/config-%{py_abi}
+%{py_libdir}/config-%{py_abi}/Makefile
+%{py_libdir}/config-%{py_abi}/Setup
+%{py_libdir}/config-%{py_abi}/Setup.config
+%{py_libdir}/config-%{py_abi}/Setup.local
 
 %files modules
 %defattr(644,root,root,755)
@@ -807,11 +814,11 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_libdir}/libpython3.so
 %{py_incdir}/*.h
 %exclude %{py_incdir}/pyconfig.h
-%attr(755,root,root) %{py_scriptdir}/config-%{py_abi}/makesetup
-%attr(755,root,root) %{py_scriptdir}/config-%{py_abi}/install-sh
-%{py_scriptdir}/config-%{py_abi}/config.c
-%{py_scriptdir}/config-%{py_abi}/config.c.in
-%{py_scriptdir}/config-%{py_abi}/python.o
+%attr(755,root,root) %{py_libdir}/config-%{py_abi}/makesetup
+%attr(755,root,root) %{py_libdir}/config-%{py_abi}/install-sh
+%{py_libdir}/config-%{py_abi}/config.c
+%{py_libdir}/config-%{py_abi}/config.c.in
+%{py_libdir}/config-%{py_abi}/python.o
 %{_pkgconfigdir}/python-%{py_ver}.pc
 %{_pkgconfigdir}/python-%{py_abi}.pc
 %{_pkgconfigdir}/python3.pc
