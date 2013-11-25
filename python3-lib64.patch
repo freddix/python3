@@ -1,6 +1,6 @@
-diff -aurN Python-3.3.2.orig/Lib/distutils/command/install.py Python-3.3.2/Lib/distutils/command/install.py
---- Python-3.3.2.orig/Lib/distutils/command/install.py	2013-08-02 10:07:05.378371271 +0200
-+++ Python-3.3.2/Lib/distutils/command/install.py	2013-08-02 10:07:26.360212825 +0200
+diff -aurN Python-3.3.3.orig/Lib/distutils/command/install.py Python-3.3.3/Lib/distutils/command/install.py
+--- Python-3.3.3.orig/Lib/distutils/command/install.py	2013-11-25 12:44:06.518309086 +0100
++++ Python-3.3.3/Lib/distutils/command/install.py	2013-11-25 12:44:53.863128105 +0100
 @@ -45,14 +45,14 @@
  INSTALL_SCHEMES = {
      'unix_prefix': {
@@ -18,9 +18,9 @@ diff -aurN Python-3.3.2.orig/Lib/distutils/command/install.py Python-3.3.2/Lib/d
          'headers': '$base/include/python/$dist_name',
          'scripts': '$base/bin',
          'data'   : '$base',
-diff -aurN Python-3.3.2.orig/Lib/distutils/sysconfig.py Python-3.3.2/Lib/distutils/sysconfig.py
---- Python-3.3.2.orig/Lib/distutils/sysconfig.py	2013-08-02 10:07:05.376371191 +0200
-+++ Python-3.3.2/Lib/distutils/sysconfig.py	2013-08-02 10:07:26.360212825 +0200
+diff -aurN Python-3.3.3.orig/Lib/distutils/sysconfig.py Python-3.3.3/Lib/distutils/sysconfig.py
+--- Python-3.3.3.orig/Lib/distutils/sysconfig.py	2013-11-25 12:44:06.517309048 +0100
++++ Python-3.3.3/Lib/distutils/sysconfig.py	2013-11-25 12:44:53.863128105 +0100
 @@ -143,8 +143,12 @@
              prefix = plat_specific and EXEC_PREFIX or PREFIX
  
@@ -35,9 +35,9 @@ diff -aurN Python-3.3.2.orig/Lib/distutils/sysconfig.py Python-3.3.2/Lib/distuti
          if standard_lib:
              return libpython
          else:
-diff -aurN Python-3.3.2.orig/Lib/site.py Python-3.3.2/Lib/site.py
---- Python-3.3.2.orig/Lib/site.py	2013-08-02 10:07:05.372371031 +0200
-+++ Python-3.3.2/Lib/site.py	2013-08-02 10:07:26.360212825 +0200
+diff -aurN Python-3.3.3.orig/Lib/site.py Python-3.3.3/Lib/site.py
+--- Python-3.3.3.orig/Lib/site.py	2013-11-25 12:44:06.514308933 +0100
++++ Python-3.3.3/Lib/site.py	2013-11-25 12:44:53.864128142 +0100
 @@ -303,12 +303,16 @@
          if sys.platform in ('os2emx', 'riscos'):
              sitepackages.append(os.path.join(prefix, "Lib", "site-packages"))
@@ -55,9 +55,9 @@ diff -aurN Python-3.3.2.orig/Lib/site.py Python-3.3.2/Lib/site.py
              sitepackages.append(os.path.join(prefix, "lib", "site-packages"))
          if sys.platform == "darwin":
              # for framework builds *only* we add the standard Apple
-diff -aurN Python-3.3.2.orig/Lib/sysconfig.py Python-3.3.2/Lib/sysconfig.py
---- Python-3.3.2.orig/Lib/sysconfig.py	2013-08-02 10:07:05.378371271 +0200
-+++ Python-3.3.2/Lib/sysconfig.py	2013-08-02 10:07:26.360212825 +0200
+diff -aurN Python-3.3.3.orig/Lib/sysconfig.py Python-3.3.3/Lib/sysconfig.py
+--- Python-3.3.3.orig/Lib/sysconfig.py	2013-11-25 12:44:06.518309086 +0100
++++ Python-3.3.3/Lib/sysconfig.py	2013-11-25 12:44:53.864128142 +0100
 @@ -21,10 +21,10 @@
  
  _INSTALL_SCHEMES = {
@@ -100,10 +100,10 @@ diff -aurN Python-3.3.2.orig/Lib/sysconfig.py Python-3.3.2/Lib/sysconfig.py
          'include': '{userbase}/include/python{py_version_short}',
          'scripts': '{userbase}/bin',
          'data': '{userbase}',
-diff -aurN Python-3.3.2.orig/Makefile.pre.in Python-3.3.2/Makefile.pre.in
---- Python-3.3.2.orig/Makefile.pre.in	2013-08-02 10:07:05.339369707 +0200
-+++ Python-3.3.2/Makefile.pre.in	2013-08-02 10:21:36.792384672 +0200
-@@ -1177,7 +1177,7 @@
+diff -aurN Python-3.3.3.orig/Makefile.pre.in Python-3.3.3/Makefile.pre.in
+--- Python-3.3.3.orig/Makefile.pre.in	2013-11-25 12:44:06.493308126 +0100
++++ Python-3.3.3/Makefile.pre.in	2013-11-25 12:44:53.864128142 +0100
+@@ -1183,7 +1183,7 @@
  
  # Install the library and miscellaneous stuff needed for extending/embedding
  # This goes into $(exec_prefix)
@@ -112,9 +112,9 @@ diff -aurN Python-3.3.2.orig/Makefile.pre.in Python-3.3.2/Makefile.pre.in
  
  # pkgconfig directory
  LIBPC=		$(LIBDIR)/pkgconfig
-diff -aurN Python-3.3.2.orig/Modules/getpath.c Python-3.3.2/Modules/getpath.c
---- Python-3.3.2.orig/Modules/getpath.c	2013-08-02 10:07:05.363370670 +0200
-+++ Python-3.3.2/Modules/getpath.c	2013-08-02 10:07:26.361212865 +0200
+diff -aurN Python-3.3.3.orig/Modules/getpath.c Python-3.3.3/Modules/getpath.c
+--- Python-3.3.3.orig/Modules/getpath.c	2013-11-25 12:44:06.508308702 +0100
++++ Python-3.3.3/Modules/getpath.c	2013-11-25 12:58:01.150376173 +0100
 @@ -123,7 +123,7 @@
  
  #ifndef PYTHONPATH
@@ -132,16 +132,16 @@ diff -aurN Python-3.3.2.orig/Modules/getpath.c Python-3.3.2/Modules/getpath.c
  
  static void
  reduce(wchar_t *dir)
-@@ -391,7 +392,7 @@
-             wcsncpy(exec_prefix, delim+1, MAXPATHLEN);
+@@ -396,7 +397,7 @@
          else
              wcsncpy(exec_prefix, home, MAXPATHLEN);
+         exec_prefix[MAXPATHLEN] = L'\0';
 -        joinpath(exec_prefix, lib_python);
 +        joinpath(exec_prefix, lib64_python);
          joinpath(exec_prefix, L"lib-dynload");
          return 1;
      }
-@@ -432,7 +433,7 @@
+@@ -439,7 +440,7 @@
      copy_absolute(exec_prefix, argv0_path, MAXPATHLEN+1);
      do {
          n = wcslen(exec_prefix);
@@ -150,16 +150,16 @@ diff -aurN Python-3.3.2.orig/Modules/getpath.c Python-3.3.2/Modules/getpath.c
          joinpath(exec_prefix, L"lib-dynload");
          if (isdir(exec_prefix))
              return 1;
-@@ -442,7 +443,7 @@
- 
-     /* Look at configure's EXEC_PREFIX */
-     wcsncpy(exec_prefix, _exec_prefix, MAXPATHLEN);
--    joinpath(exec_prefix, lib_python);
-+    joinpath(exec_prefix, lib64_python);
-     joinpath(exec_prefix, L"lib-dynload");
-     if (isdir(exec_prefix))
-         return 1;
-@@ -687,7 +688,7 @@
+@@ -672,7 +673,7 @@
+             fprintf(stderr,
+                 "Could not find platform independent libraries <prefix>\n");
+         wcsncpy(prefix, _prefix, MAXPATHLEN);
+-        joinpath(prefix, lib_python);
++        joinpath(prefix, lib64_python);
+     }
+     else
+         reduce(prefix);
+@@ -695,7 +696,7 @@
              fprintf(stderr,
                  "Could not find platform dependent libraries <exec_prefix>\n");
          wcsncpy(exec_prefix, _exec_prefix, MAXPATHLEN);
@@ -168,9 +168,9 @@ diff -aurN Python-3.3.2.orig/Modules/getpath.c Python-3.3.2/Modules/getpath.c
      }
      /* If we found EXEC_PREFIX do *not* reduce it!  (Yet.) */
  
-diff -aurN Python-3.3.2.orig/setup.py Python-3.3.2/setup.py
---- Python-3.3.2.orig/setup.py	2013-08-02 10:07:05.407372435 +0200
-+++ Python-3.3.2/setup.py	2013-08-02 10:10:13.610945524 +0200
+diff -aurN Python-3.3.3.orig/setup.py Python-3.3.3/setup.py
+--- Python-3.3.3.orig/setup.py	2013-11-25 12:44:06.536309778 +0100
++++ Python-3.3.3/setup.py	2013-11-25 12:44:53.865128180 +0100
 @@ -712,11 +712,11 @@
              elif curses_library:
                  readline_libs.append(curses_library)

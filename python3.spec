@@ -1,14 +1,7 @@
 %bcond_with	tests	# skip tests
-
-# tests which will not work on 64-bit platforms
-%define		no64bit_tests	test_audioop test_rgbimg test_imageop
-# tests which may fail because of builder environment limitations (no /proc or /dev/pts)
-%define		nobuilder_tests test_resource test_openpty test_socket test_nis test_posix test_locale test_pty
-
-# tests which fail because of some unknown/unresolved reason (this list should be empty)
-#   test_site: fails because our site.py is patched to include both /usr/share/... and /usr/lib...
-#   test_gdb: fails, as the gdb uses old python version
-%define		broken_tests test_httpservers test_distutils test_cmd_line test_pydoc test_telnetlib test_zlib test_gdb test_site
+# 6 skips unexpected on linux:
+#   test_idle test_ioctl test_tcl test_tk test_ttk_guionly
+#   test_ttk_textonly
 
 %define		py_ver		3.3
 %define		py_abi		%{py_ver}m
@@ -21,13 +14,13 @@
 
 Summary:	Very high level scripting language with X interface
 Name:		python3
-Version:	%{py_ver}.2
+Version:	%{py_ver}.3
 Release:	2
 Epoch:		1
 License:	PSF
 Group:		Applications
-Source0:	http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
-# Source0-md5:	7dffe775f3bea68a44f762a3490e5e28
+Source0:	http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.xz
+# Source0-md5:	4ca001c5586eb0744e3174bc75c6fba8
 Patch0:		%{name}-pythonpath.patch
 Patch1:		%{name}-opt.patch
 Patch2:		%{name}-cflags.patch
@@ -59,9 +52,6 @@ BuildRequires:	xz-devel
 BuildRequires:	zlib-devel
 Requires:	%{name}-libs = %{epoch}:%{version}-%{release}
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-
-%define		test_flags	-w -l -x
-%define		test_list	%{nobuilder_tests} %{broken_tests}
 
 %description
 Python is an interpreted, interactive, object-oriented programming
@@ -146,8 +136,9 @@ Standard Python interface to the Tk GUI toolkit.
 %patch5 -p1
 %endif
 %patch6 -p1
+#
 %patch7 -p1
-%patch8 -p1
+%patch8 -p0
 %patch9 -p0
 
 %{__rm} -r Modules/{expat,zlib,_ctypes/{darwin,libffi*}}
@@ -241,12 +232,8 @@ install -p Tools/i18n/pygettext.py $RPM_BUILD_ROOT%{_bindir}/pygettext%{py_ver}
 %check
 LC_ALL=C
 export LC_ALL
-binlibdir=`echo build/lib.*`
-%{__make} test \
-	TESTOPTS="%{test_flags} %{test_list}" \
-	TESTPYTHON="LD_LIBRARY_PATH=`pwd` PYTHONHOME=`pwd` PYTHONPATH=`pwd`/Lib:`pwd`/$binlibdir ./python -tt"
+LD_LIBRARY_PATH=`pwd` ./python -m test.regrtest -x test_posixpath test_logging
 %endif
-
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -261,7 +248,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_bindir}/python3
 %attr(755,root,root) %{_bindir}/pyvenv
 %attr(755,root,root) %{_bindir}/pyvenv-%{py_ver}
-%{_mandir}/man1/python%{py_ver}.1*
+%{_mandir}/man1/python*.1*
 
 %files libs
 %defattr(644,root,root,755)

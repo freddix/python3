@@ -1,117 +1,24 @@
-diff -r d9893d13c628 Lib/_osx_support.py
---- a/Lib/_osx_support.py	Sat Apr 06 09:40:02 2013 +0200
-+++ b/Lib/_osx_support.py	Sat Apr 27 16:51:50 2013 -0700
-@@ -14,7 +14,7 @@
- # configuration variables that may contain universal build flags,
- # like "-arch" or "-isdkroot", that may need customization for
- # the user environment
--_UNIVERSAL_CONFIG_VARS = ('CFLAGS', 'LDFLAGS', 'CPPFLAGS', 'BASECFLAGS',
-+_UNIVERSAL_CONFIG_VARS = ('CFLAGS', 'CXXFLAGS', 'LDFLAGS', 'CPPFLAGS', 'BASECFLAGS',
-                             'BLDSHARED', 'LDSHARED', 'CC', 'CXX',
-                             'PY_CFLAGS', 'PY_LDFLAGS', 'PY_CPPFLAGS',
-                             'PY_CORE_CFLAGS')
-diff -r d9893d13c628 Lib/distutils/cygwinccompiler.py
---- a/Lib/distutils/cygwinccompiler.py	Sat Apr 06 09:40:02 2013 +0200
-+++ b/Lib/distutils/cygwinccompiler.py	Sat Apr 27 16:51:50 2013 -0700
-@@ -139,9 +139,13 @@
-         self.set_executables(compiler='gcc -mcygwin -O -Wall',
-                              compiler_so='gcc -mcygwin -mdll -O -Wall',
-                              compiler_cxx='g++ -mcygwin -O -Wall',
-+                             compiler_so_cxx='g++ -mcygwin -mdll -O -Wall',
-                              linker_exe='gcc -mcygwin',
-                              linker_so=('%s -mcygwin %s' %
--                                        (self.linker_dll, shared_option)))
-+                                        (self.linker_dll, shared_option)),
-+                             linker_exe_cxx='g++ -mcygwin',
-+                             linker_so_cxx=('%s -mcygwin %s' %
-+                                            (self.linker_dll, shared_option)))
- 
-         # cygwin and mingw32 need different sets of libraries
-         if self.gcc_version == "2.91.57":
-@@ -165,8 +169,12 @@
-                 raise CompileError(msg)
-         else: # for other files use the C-compiler
-             try:
--                self.spawn(self.compiler_so + cc_args + [src, '-o', obj] +
--                           extra_postargs)
-+                if self.detect_language(src) == 'c++':
-+                    self.spawn(self.compiler_so_cxx + cc_args + [src, '-o', obj] +
-+                               extra_postargs)
-+                else:
-+                    self.spawn(self.compiler_so + cc_args + [src, '-o', obj] +
-+                               extra_postargs)
-             except DistutilsExecError as msg:
-                 raise CompileError(msg)
- 
-@@ -297,10 +305,15 @@
-         self.set_executables(compiler='gcc -mno-cygwin -O -Wall',
-                              compiler_so='gcc -mno-cygwin -mdll -O -Wall',
-                              compiler_cxx='g++ -mno-cygwin -O -Wall',
-+                             compiler_so_cxx='g++ -mno-cygwin -mdll -O -Wall',
-                              linker_exe='gcc -mno-cygwin',
-                              linker_so='%s -mno-cygwin %s %s'
-                                         % (self.linker_dll, shared_option,
--                                           entry_point))
-+                                           entry_point),
-+                             linker_exe_cxx='g++ -mno-cygwin',
-+                             linker_so_cxx='%s -mno-cygwin %s %s'
-+                                            % (self.linker_dll, shared_option,
-+                                               entry_point))
-         # Maybe we should also append -mthreads, but then the finished
-         # dlls need another dll (mingwm10.dll see Mingw32 docs)
-         # (-mthreads: Support thread-safe exception handling on `Mingw32')
-diff -r d9893d13c628 Lib/distutils/emxccompiler.py
---- a/Lib/distutils/emxccompiler.py	Sat Apr 06 09:40:02 2013 +0200
-+++ b/Lib/distutils/emxccompiler.py	Sat Apr 27 16:51:50 2013 -0700
-@@ -63,8 +63,12 @@
-         # XXX optimization, warnings etc. should be customizable.
-         self.set_executables(compiler='gcc -Zomf -Zmt -O3 -fomit-frame-pointer -mprobe -Wall',
-                              compiler_so='gcc -Zomf -Zmt -O3 -fomit-frame-pointer -mprobe -Wall',
-+                             compiler_cxx='g++ -Zomf -Zmt -O3 -fomit-frame-pointer -mprobe -Wall',
-+                             compiler_so_cxx='g++ -Zomf -Zmt -O3 -fomit-frame-pointer -mprobe -Wall',
-                              linker_exe='gcc -Zomf -Zmt -Zcrtdll',
--                             linker_so='gcc -Zomf -Zmt -Zcrtdll -Zdll')
-+                             linker_so='gcc -Zomf -Zmt -Zcrtdll -Zdll',
-+                             linker_exe_cxx='g++ -Zomf -Zmt -Zcrtdll',
-+                             linker_so_cxx='g++ -Zomf -Zmt -Zcrtdll -Zdll')
- 
-         # want the gcc library statically linked (so that we don't have
-         # to distribute a version dependent on the compiler we have)
-@@ -81,8 +85,12 @@
-                 raise CompileError(msg)
-         else: # for other files use the C-compiler
-             try:
--                self.spawn(self.compiler_so + cc_args + [src, '-o', obj] +
--                           extra_postargs)
-+                if self.detect_language(src) == 'c++':
-+                    self.spawn(self.compiler_so_cxx + cc_args + [src, '-o', obj] +
-+                               extra_postargs)
-+                else:
-+                    self.spawn(self.compiler_so + cc_args + [src, '-o', obj] +
-+                               extra_postargs)
-             except DistutilsExecError as msg:
-                 raise CompileError(msg)
- 
-diff -r d9893d13c628 Lib/distutils/sysconfig.py
---- a/Lib/distutils/sysconfig.py	Sat Apr 06 09:40:02 2013 +0200
-+++ b/Lib/distutils/sysconfig.py	Sat Apr 27 16:51:50 2013 -0700
-@@ -191,10 +191,12 @@
+http://bugs.python.org/issue1222585
+
+--- Lib/distutils/sysconfig.py
++++ Lib/distutils/sysconfig.py
+@@ -191,9 +191,12 @@
                  _osx_support.customize_compiler(_config_vars)
                  _config_vars['CUSTOMIZED_OSX_COMPILER'] = 'True'
  
 -        (cc, cxx, opt, cflags, ccshared, ldshared, shlib_suffix, ar, ar_flags) = \
 -            get_config_vars('CC', 'CXX', 'OPT', 'CFLAGS',
 -                            'CCSHARED', 'LDSHARED', 'SHLIB_SUFFIX', 'AR', 'ARFLAGS')
-+        (cc, cxx, opt, cflags, ccshared, ldshared, ldcxxshared, shlib_suffix, ar, ar_flags) = \
-+            get_config_vars('CC', 'CXX', 'OPT', 'CFLAGS', 'CCSHARED', 'LDSHARED',
-+                            'LDCXXSHARED', 'SO', 'AR', 'ARFLAGS')
- 
++        (cc, cxx, ccshared, ldshared, ldcxxshared, shlib_suffix, ar, ar_flags) = \
++            get_config_vars('CC', 'CXX', 'CCSHARED', 'LDSHARED', 'LDCXXSHARED',
++                            'SHLIB_SUFFIX', 'AR', 'ARFLAGS')
++
 +        cflags = ''
 +        cxxflags = ''
-         newcc = None
+ 
          if 'CC' in os.environ:
-             cc = os.environ['CC']
-@@ -202,19 +204,27 @@
+             newcc = os.environ['CC']
+@@ -208,19 +211,27 @@
              cxx = os.environ['CXX']
          if 'LDSHARED' in os.environ:
              ldshared = os.environ['LDSHARED']
@@ -140,7 +47,7 @@ diff -r d9893d13c628 Lib/distutils/sysconfig.py
          if 'AR' in os.environ:
              ar = os.environ['AR']
          if 'ARFLAGS' in os.environ:
-@@ -223,13 +233,17 @@
+@@ -229,13 +240,17 @@
              archiver = ar + ' ' + ar_flags
  
          cc_cmd = cc + ' ' + cflags
@@ -159,9 +66,8 @@ diff -r d9893d13c628 Lib/distutils/sysconfig.py
              archiver=archiver)
  
          compiler.shared_lib_extension = shlib_suffix
-diff -r d9893d13c628 Lib/distutils/unixccompiler.py
---- a/Lib/distutils/unixccompiler.py	Sat Apr 06 09:40:02 2013 +0200
-+++ b/Lib/distutils/unixccompiler.py	Sat Apr 27 16:51:50 2013 -0700
+--- Lib/distutils/unixccompiler.py
++++ Lib/distutils/unixccompiler.py
 @@ -52,14 +52,17 @@
      # are pretty generic; they will probably have to be set by an outsider
      # (eg. using information discovered by the sysconfig about building
@@ -242,15 +148,14 @@ diff -r d9893d13c628 Lib/distutils/unixccompiler.py
  
                  if sys.platform == 'darwin':
                      linker = _osx_support.compiler_fixup(linker, ld_args)
-diff -r d9893d13c628 Makefile.pre.in
---- a/Makefile.pre.in	Sat Apr 06 09:40:02 2013 +0200
-+++ b/Makefile.pre.in	Sat Apr 27 16:51:50 2013 -0700
-@@ -492,7 +492,7 @@
+--- Makefile.pre.in
++++ Makefile.pre.in
+@@ -496,7 +496,7 @@
  	    *\ -s*|s*) quiet="-q";; \
  	    *) quiet="";; \
  	esac; \
 -	$(RUNSHARED) CC='$(CC)' LDSHARED='$(BLDSHARED)' OPT='$(OPT)' \
 +	$(RUNSHARED) CC='$(CC)' LDSHARED='$(BLDSHARED)' CFLAGS='$(PY_CFLAGS)' \
+ 		_TCLTK_INCLUDES='$(TCLTK_INCLUDES)' _TCLTK_LIBS='$(TCLTK_LIBS)' \
  		$(PYTHON_FOR_BUILD) $(srcdir)/setup.py $$quiet build
  
- # Build static library
