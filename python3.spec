@@ -101,7 +101,7 @@ IDE for Python language.
 %package devel
 Summary:	Libraries and header files for building python code
 Group:		Development/Languages/Python
-Requires:	%{name}-libs = %{epoch}:%{version}-%{release}
+Requires:	%{name}-modules = %{epoch}:%{version}-%{release}
 
 %description devel
 The Python interpreter is relatively easy to extend with dynamically
