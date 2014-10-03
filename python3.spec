@@ -1,3 +1,5 @@
+# based on PLD Linux spec git://git.pld-linux.org/packages/python3.git
+
 %bcond_with	tests	# skip tests
 # 6 skips unexpected on linux:
 #   test_idle test_ioctl test_tcl test_tk test_ttk_guionly
@@ -15,7 +17,7 @@
 Summary:	Very high level scripting language with X interface
 Name:		python3
 Version:	%{py_ver}.5
-Release:	1
+Release:	2
 Epoch:		1
 License:	PSF
 Group:		Applications
@@ -146,8 +148,6 @@ Standard Python interface to the Tk GUI toolkit.
 %build
 %{__aclocal}
 %{__autoconf}
-CPPFLAGS="-I/usr/include/ncursesw %{rpmcppflags}"
-export CPPFLAGS
 %configure \
 	ac_cv_posix_semaphores_enabled=yes	\
 	ac_cv_broken_sem_getvalue=no		\
