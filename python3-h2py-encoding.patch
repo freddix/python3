@@ -1,4 +1,4 @@
-http://bugs.python.org/issue13032
+https://bugs.python.org/issue13032
 
 --- Tools/scripts/h2py.py
 +++ Tools/scripts/h2py.py

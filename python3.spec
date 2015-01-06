@@ -5,7 +5,7 @@
 #   test_idle test_ioctl test_tcl test_tk test_ttk_guionly
 #   test_ttk_textonly
 
-%define		py_ver		3.3
+%define		py_ver		3.4
 %define		py_abi		%{py_ver}m
 
 %define		py_prefix	%{_prefix}
@@ -16,13 +16,13 @@
 
 Summary:	Very high level scripting language with X interface
 Name:		python3
-Version:	%{py_ver}.5
-Release:	2
+Version:	%{py_ver}.2
+Release:	1
 Epoch:		1
 License:	PSF
 Group:		Applications
 Source0:	http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.xz
-# Source0-md5:	b2a4df195d934e5b229e8328ca864960
+# Source0-md5:	36fc7327c02c6f12fa24fc9ba78039e3
 Patch0:		%{name}-pythonpath.patch
 Patch1:		%{name}-opt.patch
 Patch2:		%{name}-cflags.patch
@@ -129,6 +129,12 @@ Standard Python interface to the Tk GUI toolkit.
 
 %prep
 %setup -qn Python-%{version}
+
+%{__rm} -r Modules/{expat,zlib,_ctypes/{darwin,libffi*}}
+
+find . -name '*.py' | xargs -r grep -El '^#! */usr/bin/env python3?' | \
+    xargs %{__sed} -i -e '1s,^#! */usr/bin/env python3\?,#!/usr/bin/python3,'
+
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -139,11 +145,9 @@ Standard Python interface to the Tk GUI toolkit.
 %endif
 %patch6 -p1
 #
-%patch7 -p1
+%patch7 -p0
 %patch8 -p0
 %patch9 -p0
-
-%{__rm} -r Modules/{expat,zlib,_ctypes/{darwin,libffi*}}
 
 %build
 %{__aclocal}
@@ -159,6 +163,7 @@ Standard Python interface to the Tk GUI toolkit.
 	--with-system-expat			\
 	--with-system-ffi			\
 	--with-threads				\
+	--without-ensurepip			\
 	BLDSHARED='$(CC) $(CFLAGS) -shared'	\
 	LDFLAGS="%{rpmcflags} %{rpmldflags}"	\
 	LDSHARED='$(CC) $(CFLAGS) -shared'	\
@@ -200,6 +205,9 @@ ln -s python-%{py_ver}.pc $RPM_BUILD_ROOT%{_pkgconfigdir}/python-%{py_abi}.pc
 # pygettext.py is provided for compatibility
 install -p Tools/i18n/pygettext.py $RPM_BUILD_ROOT%{_bindir}/pygettext%{py_ver}
 
+# reindent python code
+install -p Tools/scripts/reindent.py $RPM_BUILD_ROOT%{_bindir}/pyreindent%{py_ver}
+
 # just to cut the noise, as they are not packaged (now)
 # first tests (probably could be packaged)
 %{__rm} -r $RPM_BUILD_ROOT%{py_scriptdir}/test
@@ -209,6 +217,7 @@ install -p Tools/i18n/pygettext.py $RPM_BUILD_ROOT%{_bindir}/pygettext%{py_ver}
 %{__rm} -r $RPM_BUILD_ROOT%{py_scriptdir}/sqlite3/test
 %{__rm} -r $RPM_BUILD_ROOT%{py_scriptdir}/tkinter/test
 %{__rm} -r $RPM_BUILD_ROOT%{py_scriptdir}/unittest/test
+%{__rm} -r $RPM_BUILD_ROOT%{py_scriptdir}/idlelib/idle_test
 
 # other files
 %{__rm} $RPM_BUILD_ROOT%{py_scriptdir}/plat-*/regen
@@ -271,6 +280,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{py_dyndir}/_struct.cpython-*.so
 
 # modules required by python library
+%{py_scriptdir}/_collections_abc.py
+%{py_scriptdir}/_sitebuiltins.py
+%{py_scriptdir}/_sysconfigdata.py
 %{py_scriptdir}/_weakrefset.py
 %{py_scriptdir}/abc.py
 %{py_scriptdir}/bisect.py
@@ -279,10 +291,11 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/functools.py
 %{py_scriptdir}/genericpath.py
 %{py_scriptdir}/heapq.py
+%{py_scriptdir}/io.py
 %{py_scriptdir}/keyword.py
 %{py_scriptdir}/linecache.py
 %{py_scriptdir}/locale.py
-%{py_scriptdir}/io.py
+%{py_scriptdir}/os.py
 %{py_scriptdir}/posixpath.py
 %{py_scriptdir}/re.py
 %{py_scriptdir}/reprlib.py
@@ -294,9 +307,10 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/tokenize.py
 %{py_scriptdir}/traceback.py
 %{py_scriptdir}/weakref.py
-%{py_scriptdir}/os.py
 # needed by the dynamic sys.lib patch
-%{py_scriptdir}/types.py
+%{py_scriptdir}/__pycache__/_collections_abc.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/_sitebuiltins.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/_sysconfigdata.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/_weakrefset.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/abc.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/bisect.cpython-*.py[co]
@@ -322,24 +336,12 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/__pycache__/traceback.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/types.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/weakref.cpython-*.py[co]
+%{py_scriptdir}/types.py
 
 # encodings required by python library
 %dir %{py_scriptdir}/encodings
 %{py_scriptdir}/encodings/__pycache__
 %{py_scriptdir}/encodings/*.py
-
-%dir %{py_scriptdir}/collections
-%{py_scriptdir}/collections/*.py
-%{py_scriptdir}/collections/__pycache__
-
-%{py_scriptdir}/__pycache__/_sysconfigdata.cpython-33.pyc
-%{py_scriptdir}/__pycache__/_sysconfigdata.cpython-33.pyo
-%{py_scriptdir}/_sysconfigdata.py
-
-%dir %{py_scriptdir}/venv
-%{py_scriptdir}/venv/*.py
-%{py_scriptdir}/venv/__pycache__
-%{py_scriptdir}/venv/scripts
 
 %dir %{py_libdir}/config-%{py_abi}
 %{py_libdir}/config-%{py_abi}/Makefile
@@ -350,9 +352,12 @@ rm -rf $RPM_BUILD_ROOT
 %files modules
 %defattr(644,root,root,755)
 %{py_scriptdir}/__future__.py
+%{py_scriptdir}/__phello__.foo.py
+%{py_scriptdir}/_bootlocale.py
 %{py_scriptdir}/_compat_pickle.py
 %{py_scriptdir}/_dummy_thread.py
 %{py_scriptdir}/_markupbase.py
+%{py_scriptdir}/_osx_support.py
 %{py_scriptdir}/_pyio.py
 %{py_scriptdir}/_strptime.py
 %{py_scriptdir}/_threading_local.py
@@ -365,6 +370,7 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/base64.py
 %{py_scriptdir}/bdb.py
 %{py_scriptdir}/binhex.py
+%{py_scriptdir}/bz2.py
 %{py_scriptdir}/cProfile.py
 %{py_scriptdir}/calendar.py
 %{py_scriptdir}/cgi.py
@@ -378,6 +384,7 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/configparser.py
 %{py_scriptdir}/contextlib.py
 %{py_scriptdir}/copy.py
+%{py_scriptdir}/crypt.py
 %{py_scriptdir}/csv.py
 %{py_scriptdir}/datetime.py
 %{py_scriptdir}/decimal.py
@@ -385,6 +392,7 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/dis.py
 %{py_scriptdir}/doctest.py
 %{py_scriptdir}/dummy_threading.py
+%{py_scriptdir}/enum.py
 %{py_scriptdir}/filecmp.py
 %{py_scriptdir}/fileinput.py
 %{py_scriptdir}/fnmatch.py
@@ -400,7 +408,10 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/hmac.py
 %{py_scriptdir}/imaplib.py
 %{py_scriptdir}/imghdr.py
+%{py_scriptdir}/imp.py
 %{py_scriptdir}/inspect.py
+%{py_scriptdir}/ipaddress.py
+%{py_scriptdir}/lzma.py
 %{py_scriptdir}/macpath.py
 %{py_scriptdir}/macurl2path.py
 %{py_scriptdir}/mailbox.py
@@ -413,8 +424,9 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/nturl2path.py
 %{py_scriptdir}/numbers.py
 %{py_scriptdir}/opcode.py
+%{py_scriptdir}/operator.py
 %{py_scriptdir}/optparse.py
-%{py_scriptdir}/os2emxpath.py
+%{py_scriptdir}/pathlib.py
 %{py_scriptdir}/pickle.py
 %{py_scriptdir}/pickletools.py
 %{py_scriptdir}/pipes.py
@@ -432,6 +444,7 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/rlcompleter.py
 %{py_scriptdir}/runpy.py
 %{py_scriptdir}/sched.py
+%{py_scriptdir}/selectors.py
 %{py_scriptdir}/shelve.py
 %{py_scriptdir}/shlex.py
 %{py_scriptdir}/shutil.py
@@ -441,6 +454,7 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/socket.py
 %{py_scriptdir}/socketserver.py
 %{py_scriptdir}/ssl.py
+%{py_scriptdir}/statistics.py
 %{py_scriptdir}/string.py
 %{py_scriptdir}/stringprep.py
 %{py_scriptdir}/struct.py
@@ -456,6 +470,7 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/this.py
 %{py_scriptdir}/threading.py
 %{py_scriptdir}/trace.py
+%{py_scriptdir}/tracemalloc.py
 %{py_scriptdir}/tty.py
 %{py_scriptdir}/turtle.py
 %{py_scriptdir}/uu.py
@@ -465,10 +480,14 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/webbrowser.py
 %{py_scriptdir}/xdrlib.py
 %{py_scriptdir}/zipfile.py
+
 %{py_scriptdir}/__pycache__/__future__.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/__phello__.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/_bootlocale.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/_compat_pickle.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/_dummy_thread.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/_markupbase.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/_osx_support.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/_pyio.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/_strptime.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/_threading_local.cpython-*.py[co]
@@ -481,6 +500,7 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/__pycache__/base64.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/bdb.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/binhex.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/bz2.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/cProfile.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/calendar.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/cgi.cpython-*.py[co]
@@ -494,6 +514,7 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/__pycache__/configparser.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/contextlib.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/copy.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/crypt.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/csv.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/datetime.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/decimal.cpython-*.py[co]
@@ -501,6 +522,7 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/__pycache__/dis.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/doctest.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/dummy_threading.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/enum.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/filecmp.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/fileinput.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/fnmatch.cpython-*.py[co]
@@ -516,7 +538,10 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/__pycache__/hmac.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/imaplib.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/imghdr.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/imp.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/inspect.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/ipaddress.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/lzma.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/macpath.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/macurl2path.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/mailbox.cpython-*.py[co]
@@ -529,8 +554,9 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/__pycache__/nturl2path.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/numbers.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/opcode.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/operator.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/optparse.cpython-*.py[co]
-%{py_scriptdir}/__pycache__/os2emxpath.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/pathlib.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/pickle.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/pickletools.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/pipes.cpython-*.py[co]
@@ -548,6 +574,7 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/__pycache__/rlcompleter.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/runpy.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/sched.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/selectors.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/shelve.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/shlex.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/shutil.cpython-*.py[co]
@@ -557,6 +584,7 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/__pycache__/socket.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/socketserver.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/ssl.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/statistics.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/string.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/stringprep.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/struct.cpython-*.py[co]
@@ -572,6 +600,7 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/__pycache__/this.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/threading.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/trace.cpython-*.py[co]
+%{py_scriptdir}/__pycache__/tracemalloc.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/tty.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/turtle.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/uu.cpython-*.py[co]
@@ -582,68 +611,48 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/__pycache__/xdrlib.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/zipfile.cpython-*.py[co]
 
-%{py_scriptdir}/__phello__.foo.py
-%{py_scriptdir}/__pycache__/__phello__.cpython-33.pyc
-%{py_scriptdir}/__pycache__/__phello__.cpython-33.pyo
-%{py_scriptdir}/__pycache__/bz2.cpython-33.pyc
-%{py_scriptdir}/__pycache__/bz2.cpython-33.pyo
-%{py_scriptdir}/__pycache__/crypt.cpython-33.pyc
-%{py_scriptdir}/__pycache__/crypt.cpython-33.pyo
-%{py_scriptdir}/__pycache__/imp.cpython-33.pyc
-%{py_scriptdir}/__pycache__/imp.cpython-33.pyo
-%{py_scriptdir}/__pycache__/ipaddress.cpython-33.pyc
-%{py_scriptdir}/__pycache__/ipaddress.cpython-33.pyo
-%{py_scriptdir}/__pycache__/lzma.cpython-33.pyc
-%{py_scriptdir}/__pycache__/lzma.cpython-33.pyo
-%{py_scriptdir}/bz2.py
-%{py_scriptdir}/crypt.py
-%{py_scriptdir}/imp.py
-%{py_scriptdir}/ipaddress.py
-%{py_scriptdir}/lzma.py
-
-#
 # list .so modules to be sure that all of them are built
-#
 
 %attr(755,root,root) %{py_dyndir}/_bisect.cpython-*.so
-%attr(755,root,root) %{py_dyndir}/_bz2.cpython-33m.so
+%attr(755,root,root) %{py_dyndir}/_bz2.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_codecs_cn.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_codecs_hk.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_codecs_iso2022.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_codecs_jp.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_codecs_kr.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_codecs_tw.cpython-*.so
-%attr(755,root,root) %{py_dyndir}/_crypt.cpython-33m.so
+%attr(755,root,root) %{py_dyndir}/_crypt.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_csv.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_ctypes*.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_curses.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_curses_panel.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_datetime.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_dbm.cpython-*.so
-%attr(755,root,root) %{py_dyndir}/_decimal.cpython-33m.so
+%attr(755,root,root) %{py_dyndir}/_decimal.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_elementtree.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_gdbm.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_hashlib.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_heapq.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_json.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_lsprof.cpython-*.so
-%attr(755,root,root) %{py_dyndir}/_lzma.cpython-33m.so
-%attr(755,root,root) %{py_dyndir}/_md5.cpython-33m.so
+%attr(755,root,root) %{py_dyndir}/_lzma.cpython-*.so
+%attr(755,root,root) %{py_dyndir}/_md5.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_multibytecodec.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_multiprocessing.cpython-*.so
+%attr(755,root,root) %{py_dyndir}/_opcode.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_pickle.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_posixsubprocess.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_random.cpython-*.so
-%attr(755,root,root) %{py_dyndir}/_sha1.cpython-33m.so
-%attr(755,root,root) %{py_dyndir}/_sha256.cpython-33m.so
-%attr(755,root,root) %{py_dyndir}/_sha512.cpython-33m.so
+%attr(755,root,root) %{py_dyndir}/_sha1.cpython-*.so
+%attr(755,root,root) %{py_dyndir}/_sha256.cpython-*.so
+%attr(755,root,root) %{py_dyndir}/_sha512.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_socket.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_ssl.cpython-*.so
-%attr(755,root,root) %{py_dyndir}/_testbuffer.cpython-33m.so
+%attr(755,root,root) %{py_dyndir}/_testbuffer.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/_testcapi.cpython-*.so
+%attr(755,root,root) %{py_dyndir}/_testimportmultiple.cpython-*.so
 
 %attr(755,root,root) %{py_dyndir}/array.cpython-*.so
-%attr(755,root,root) %{py_dyndir}/atexit.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/audioop.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/binascii.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/cmath.cpython-*.so
@@ -658,16 +667,16 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{py_dyndir}/readline.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/resource.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/select.cpython-*.so
+%attr(755,root,root) %{py_dyndir}/spwd.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/syslog.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/termios.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/time.cpython-*.so
-%attr(755,root,root) %{py_dyndir}/spwd.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/unicodedata.cpython-*.so
 %attr(755,root,root) %{py_dyndir}/zlib.cpython-*.so
 
-%dir %{py_scriptdir}/plat-*
-%{py_scriptdir}/plat-*/__pycache__
-%{py_scriptdir}/plat-*/*.py
+%dir %{py_scriptdir}/asyncio
+%{py_scriptdir}/asyncio/__pycache__
+%{py_scriptdir}/asyncio/*.py
 
 %{py_scriptdir}/concurrent
 
@@ -699,10 +708,16 @@ rm -rf $RPM_BUILD_ROOT
 
 %dir %{py_scriptdir}/email
 %dir %{py_scriptdir}/email/mime
-%{py_scriptdir}/email/__pycache__
-%{py_scriptdir}/email/mime/__pycache__
 %{py_scriptdir}/email/*.py
+%{py_scriptdir}/email/__pycache__
+%{py_scriptdir}/email/architecture.rst
 %{py_scriptdir}/email/mime/*.py
+%{py_scriptdir}/email/mime/__pycache__
+
+%dir %{py_scriptdir}/ensurepip
+%{py_scriptdir}/ensurepip/__pycache__
+%{py_scriptdir}/ensurepip/*.py
+%{py_scriptdir}/ensurepip/_bundled
 
 %dir %{py_scriptdir}/html
 %{py_scriptdir}/html/*.py
@@ -711,6 +726,8 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{py_scriptdir}/http
 %{py_scriptdir}/http/__pycache__
 %{py_scriptdir}/http/*.py
+
+%dir %{py_scriptdir}/idlelib
 
 %dir %{py_scriptdir}/importlib
 %{py_scriptdir}/importlib/__pycache__
@@ -731,12 +748,26 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/multiprocessing/dummy/__pycache__
 %{py_scriptdir}/multiprocessing/dummy/*.py
 
+%dir %{py_scriptdir}/plat-*
+%{py_scriptdir}/plat-*/__pycache__
+%{py_scriptdir}/plat-*/*.py
+
 %{py_scriptdir}/turtledemo
-%{py_scriptdir}/unittest
+
+%dir %{py_scriptdir}/unittest
+%{py_scriptdir}/unittest/__pycache__
+%{py_scriptdir}/unittest/*.py
 
 %dir %{py_scriptdir}/urllib
 %{py_scriptdir}/urllib/__pycache__
 %{py_scriptdir}/urllib/*.py
+
+%dir %{py_scriptdir}/venv
+%dir %{py_scriptdir}/venv/scripts
+%{py_scriptdir}/venv/*.py
+%{py_scriptdir}/venv/__pycache__
+%dir %{py_scriptdir}/venv/scripts/posix
+%{py_scriptdir}/venv/scripts/posix/activate
 
 %dir %{py_scriptdir}/wsgiref
 %{py_scriptdir}/wsgiref/__pycache__
@@ -782,7 +813,6 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/idle3
 %attr(755,root,root) %{_bindir}/idle%{py_ver}
-%dir %{py_scriptdir}/idlelib
 %dir %{py_scriptdir}/idlelib/Icons
 %{py_scriptdir}/idlelib/__pycache__
 %{py_scriptdir}/idlelib/*.py
@@ -806,6 +836,7 @@ rm -rf $RPM_BUILD_ROOT
 %{py_libdir}/config-%{py_abi}/config.c
 %{py_libdir}/config-%{py_abi}/config.c.in
 %{py_libdir}/config-%{py_abi}/python.o
+%{py_libdir}/config-%{py_abi}/python-config.py
 %{_pkgconfigdir}/python-%{py_ver}.pc
 %{_pkgconfigdir}/python-%{py_abi}.pc
 %{_pkgconfigdir}/python3.pc
@@ -813,6 +844,7 @@ rm -rf $RPM_BUILD_ROOT
 %files devel-tools
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/pygettext%{py_ver}
+%attr(755,root,root) %{_bindir}/pyreindent%{py_ver}
 %{py_scriptdir}/pdb.py
 %{py_scriptdir}/profile.py
 %{py_scriptdir}/pstats.py

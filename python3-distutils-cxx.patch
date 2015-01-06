@@ -1,8 +1,66 @@
-http://bugs.python.org/issue1222585
+https://bugs.python.org/issue1222585
 
+--- Lib/distutils/cygwinccompiler.py
++++ Lib/distutils/cygwinccompiler.py
+@@ -125,8 +125,10 @@
+         # dllwrap 2.10.90 is buggy
+         if self.ld_version >= "2.10.90":
+             self.linker_dll = "gcc"
++            self.linker_dll_cxx = "g++"
+         else:
+             self.linker_dll = "dllwrap"
++            self.linker_dll_cxx = "dllwrap"
+ 
+         # ld_version >= "2.13" support -shared so use it instead of
+         # -mdll -static
+@@ -140,9 +142,13 @@
+         self.set_executables(compiler='gcc -mcygwin -O -Wall',
+                              compiler_so='gcc -mcygwin -mdll -O -Wall',
+                              compiler_cxx='g++ -mcygwin -O -Wall',
++                             compiler_so_cxx='g++ -mcygwin -mdll -O -Wall',
+                              linker_exe='gcc -mcygwin',
+                              linker_so=('%s -mcygwin %s' %
+-                                        (self.linker_dll, shared_option)))
++                                        (self.linker_dll, shared_option)),
++                             linker_exe_cxx='g++ -mcygwin',
++                             linker_so_cxx=('%s -mcygwin %s' %
++                                            (self.linker_dll_cxx, shared_option)))
+ 
+         # cygwin and mingw32 need different sets of libraries
+         if self.gcc_version == "2.91.57":
+@@ -166,8 +172,12 @@
+                 raise CompileError(msg)
+         else: # for other files use the C-compiler
+             try:
+-                self.spawn(self.compiler_so + cc_args + [src, '-o', obj] +
+-                           extra_postargs)
++                if self.detect_language(src) == 'c++':
++                    self.spawn(self.compiler_so_cxx + cc_args + [src, '-o', obj] +
++                               extra_postargs)
++                else:
++                    self.spawn(self.compiler_so + cc_args + [src, '-o', obj] +
++                               extra_postargs)
+             except DistutilsExecError as msg:
+                 raise CompileError(msg)
+ 
+@@ -302,9 +312,14 @@
+         self.set_executables(compiler='gcc -O -Wall',
+                              compiler_so='gcc -mdll -O -Wall',
+                              compiler_cxx='g++ -O -Wall',
++                             compiler_so_cxx='g++ -mdll -O -Wall',
+                              linker_exe='gcc',
+                              linker_so='%s %s %s'
+                                         % (self.linker_dll, shared_option,
++                                           entry_point),
++                             linker_exe_cxx='g++',
++                             linker_so_cxx='%s %s %s'
++                                        % (self.linker_dll_cxx, shared_option,
+                                            entry_point))
+         # Maybe we should also append -mthreads, but then the finished
+         # dlls need another dll (mingwm10.dll see Mingw32 docs)
 --- Lib/distutils/sysconfig.py
 +++ Lib/distutils/sysconfig.py
-@@ -191,9 +191,12 @@
+@@ -182,9 +182,12 @@
                  _osx_support.customize_compiler(_config_vars)
                  _config_vars['CUSTOMIZED_OSX_COMPILER'] = 'True'
  
@@ -18,7 +76,7 @@ http://bugs.python.org/issue1222585
  
          if 'CC' in os.environ:
              newcc = os.environ['CC']
-@@ -208,19 +211,27 @@
+@@ -199,19 +202,27 @@
              cxx = os.environ['CXX']
          if 'LDSHARED' in os.environ:
              ldshared = os.environ['LDSHARED']
@@ -47,7 +105,7 @@ http://bugs.python.org/issue1222585
          if 'AR' in os.environ:
              ar = os.environ['AR']
          if 'ARFLAGS' in os.environ:
-@@ -229,13 +240,17 @@
+@@ -220,13 +231,17 @@
              archiver = ar + ' ' + ar_flags
  
          cc_cmd = cc + ' ' + cflags
@@ -148,9 +206,30 @@ http://bugs.python.org/issue1222585
  
                  if sys.platform == 'darwin':
                      linker = _osx_support.compiler_fixup(linker, ld_args)
+--- Lib/_osx_support.py
++++ Lib/_osx_support.py
+@@ -14,13 +14,13 @@
+ # configuration variables that may contain universal build flags,
+ # like "-arch" or "-isdkroot", that may need customization for
+ # the user environment
+-_UNIVERSAL_CONFIG_VARS = ('CFLAGS', 'LDFLAGS', 'CPPFLAGS', 'BASECFLAGS',
+-                            'BLDSHARED', 'LDSHARED', 'CC', 'CXX',
+-                            'PY_CFLAGS', 'PY_LDFLAGS', 'PY_CPPFLAGS',
+-                            'PY_CORE_CFLAGS')
++_UNIVERSAL_CONFIG_VARS = ('CFLAGS', 'CXXFLAGS', 'LDFLAGS', 'CPPFLAGS',
++                          'BASECFLAGS', 'BLDSHARED', 'LDSHARED', 'LDCXXSHARED',
++                          'CC', 'CXX', 'PY_CFLAGS', 'PY_LDFLAGS',
++                          'PY_CPPFLAGS', 'PY_CORE_CFLAGS')
+ 
+ # configuration variables that may contain compiler calls
+-_COMPILER_CONFIG_VARS = ('BLDSHARED', 'LDSHARED', 'CC', 'CXX')
++_COMPILER_CONFIG_VARS = ('BLDSHARED', 'LDSHARED', 'LDCXXSHARED', 'CC', 'CXX')
+ 
+ # prefix added to original configuration variable names
+ _INITPRE = '_OSX_SUPPORT_INITIAL_'
 --- Makefile.pre.in
 +++ Makefile.pre.in
-@@ -496,7 +496,7 @@
+@@ -568,7 +568,7 @@
  	    *\ -s*|s*) quiet="-q";; \
  	    *) quiet="";; \
  	esac; \
