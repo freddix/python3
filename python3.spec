@@ -1,9 +1,14 @@
 # based on PLD Linux spec git://git.pld-linux.org/packages/python3.git
 
 %bcond_with	tests	# skip tests
-# 6 skips unexpected on linux:
-#   test_idle test_ioctl test_tcl test_tk test_ttk_guionly
-#   test_ttk_textonly
+# 366 tests OK.
+# 3 tests failed:
+#     test_distutils test_socket test_strptime
+# 15 tests skipped:
+#     test_devpoll test_idle test_kqueue test_msilib test_ossaudiodev
+#     test_pep277 test_startfile test_tcl test_tk test_ttk_guionly
+#     test_ttk_textonly test_unicode_file test_winreg test_winsound
+#     test_zipfile64
 
 %define		py_ver		3.4
 %define		py_abi		%{py_ver}m
@@ -239,9 +244,9 @@ install -p Tools/scripts/reindent.py $RPM_BUILD_ROOT%{_bindir}/pyreindent%{py_ve
 
 %if %{with tests}
 %check
-LC_ALL=C
-export LC_ALL
-LD_LIBRARY_PATH=`pwd` ./python -m test.regrtest -x test_posixpath test_logging
+export LC_ALL=C
+export TERM=screen
+LD_LIBRARY_PATH=$(pwd) ./python -m test.regrtest -uall -x test_posixpath test_uuid test_site test_urllib2_localnet test_gdb
 %endif
 
 %clean
@@ -337,6 +342,8 @@ rm -rf $RPM_BUILD_ROOT
 %{py_scriptdir}/__pycache__/types.cpython-*.py[co]
 %{py_scriptdir}/__pycache__/weakref.cpython-*.py[co]
 %{py_scriptdir}/types.py
+
+%{py_scriptdir}/collections
 
 # encodings required by python library
 %dir %{py_scriptdir}/encodings
