@@ -22,7 +22,7 @@
 Summary:	Very high level scripting language with X interface
 Name:		python3
 Version:	%{py_ver}.2
-Release:	1
+Release:	2
 Epoch:		1
 License:	PSF
 Group:		Applications
@@ -51,6 +51,7 @@ BuildRequires:	libffi-devel
 BuildRequires:	libstdc++-devel
 BuildRequires:	ncurses-ext-devel
 BuildRequires:	openssl-devel
+BuildRequires:	python3-modules
 BuildRequires:	readline-devel
 BuildRequires:	rpm-pythonprov
 BuildRequires:	sed

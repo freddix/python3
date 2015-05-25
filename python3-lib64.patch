@@ -1,6 +1,6 @@
 diff -aurN Python-3.4.2.orig/Lib/distutils/command/install.py Python-3.4.2/Lib/distutils/command/install.py
---- Python-3.4.2.orig/Lib/distutils/command/install.py	2014-10-08 10:18:12.000000000 +0200
-+++ Python-3.4.2/Lib/distutils/command/install.py	2015-01-05 16:52:21.639815163 +0100
+--- Python-3.4.2.orig/Lib/distutils/command/install.py	2015-02-08 20:07:32.745985651 +0100
++++ Python-3.4.2/Lib/distutils/command/install.py	2015-02-08 20:09:12.076304977 +0100
 @@ -30,14 +30,14 @@
  INSTALL_SCHEMES = {
      'unix_prefix': {
@@ -19,8 +19,8 @@ diff -aurN Python-3.4.2.orig/Lib/distutils/command/install.py Python-3.4.2/Lib/d
          'scripts': '$base/bin',
          'data'   : '$base',
 diff -aurN Python-3.4.2.orig/Lib/distutils/sysconfig.py Python-3.4.2/Lib/distutils/sysconfig.py
---- Python-3.4.2.orig/Lib/distutils/sysconfig.py	2014-10-08 10:18:12.000000000 +0200
-+++ Python-3.4.2/Lib/distutils/sysconfig.py	2015-01-05 16:52:21.639815163 +0100
+--- Python-3.4.2.orig/Lib/distutils/sysconfig.py	2015-02-08 20:07:32.742652195 +0100
++++ Python-3.4.2/Lib/distutils/sysconfig.py	2015-02-08 20:22:43.019711316 +0100
 @@ -141,8 +141,12 @@
              prefix = plat_specific and EXEC_PREFIX or PREFIX
  
@@ -36,8 +36,8 @@ diff -aurN Python-3.4.2.orig/Lib/distutils/sysconfig.py Python-3.4.2/Lib/distuti
              return libpython
          else:
 diff -aurN Python-3.4.2.orig/Lib/site.py Python-3.4.2/Lib/site.py
---- Python-3.4.2.orig/Lib/site.py	2014-10-08 10:18:12.000000000 +0200
-+++ Python-3.4.2/Lib/site.py	2015-01-05 16:53:55.603560456 +0100
+--- Python-3.4.2.orig/Lib/site.py	2015-02-08 20:07:32.775986753 +0100
++++ Python-3.4.2/Lib/site.py	2015-02-08 20:24:14.186877018 +0100
 @@ -304,12 +304,16 @@
          seen.add(prefix)
  
@@ -56,8 +56,8 @@ diff -aurN Python-3.4.2.orig/Lib/site.py Python-3.4.2/Lib/site.py
          if sys.platform == "darwin":
              # for framework builds *only* we add the standard Apple
 diff -aurN Python-3.4.2.orig/Lib/sysconfig.py Python-3.4.2/Lib/sysconfig.py
---- Python-3.4.2.orig/Lib/sysconfig.py	2014-10-08 10:18:12.000000000 +0200
-+++ Python-3.4.2/Lib/sysconfig.py	2015-01-05 16:52:21.639815163 +0100
+--- Python-3.4.2.orig/Lib/sysconfig.py	2015-02-08 20:07:32.739318738 +0100
++++ Python-3.4.2/Lib/sysconfig.py	2015-02-08 20:27:21.501221891 +0100
 @@ -20,10 +20,10 @@
  
  _INSTALL_SCHEMES = {
@@ -101,8 +101,8 @@ diff -aurN Python-3.4.2.orig/Lib/sysconfig.py Python-3.4.2/Lib/sysconfig.py
          'scripts': '{userbase}/bin',
          'data': '{userbase}',
 diff -aurN Python-3.4.2.orig/Makefile.pre.in Python-3.4.2/Makefile.pre.in
---- Python-3.4.2.orig/Makefile.pre.in	2014-10-08 10:18:14.000000000 +0200
-+++ Python-3.4.2/Makefile.pre.in	2015-01-05 16:52:21.639815163 +0100
+--- Python-3.4.2.orig/Makefile.pre.in	2015-02-08 20:07:32.739318738 +0100
++++ Python-3.4.2/Makefile.pre.in	2015-02-08 20:28:14.416685868 +0100
 @@ -1310,7 +1310,7 @@
  
  # Install the library and miscellaneous stuff needed for extending/embedding
@@ -113,8 +113,8 @@ diff -aurN Python-3.4.2.orig/Makefile.pre.in Python-3.4.2/Makefile.pre.in
  # pkgconfig directory
  LIBPC=		$(LIBDIR)/pkgconfig
 diff -aurN Python-3.4.2.orig/Modules/getpath.c Python-3.4.2/Modules/getpath.c
---- Python-3.4.2.orig/Modules/getpath.c	2014-10-08 10:18:15.000000000 +0200
-+++ Python-3.4.2/Modules/getpath.c	2015-01-05 17:12:01.759066613 +0100
+--- Python-3.4.2.orig/Modules/getpath.c	2015-02-08 20:07:32.789320577 +0100
++++ Python-3.4.2/Modules/getpath.c	2015-02-08 20:34:35.188347324 +0100
 @@ -119,7 +119,7 @@
  
  #ifndef PYTHONPATH
@@ -124,25 +124,31 @@ diff -aurN Python-3.4.2.orig/Modules/getpath.c Python-3.4.2/Modules/getpath.c
  #endif
  
  #ifndef LANDMARK
-@@ -494,7 +494,7 @@
+@@ -490,13 +490,15 @@
+ #endif
+     wchar_t *_pythonpath, *_prefix, *_exec_prefix;
+     wchar_t *lib_python;
++    wchar_t *lib64_python;
+ 
      _pythonpath = _Py_char2wchar(PYTHONPATH, NULL);
      _prefix = _Py_char2wchar(PREFIX, NULL);
      _exec_prefix = _Py_char2wchar(EXEC_PREFIX, NULL);
--    lib_python = _Py_char2wchar("lib/python" VERSION, NULL);
-+    lib_python = _Py_char2wchar("lib64/python" VERSION, NULL);
+     lib_python = _Py_char2wchar("lib/python" VERSION, NULL);
++    lib64_python = _Py_char2wchar("lib64/python" VERSION, NULL);
  
-     if (!_pythonpath || !_prefix || !_exec_prefix || !lib_python) {
+-    if (!_pythonpath || !_prefix || !_exec_prefix || !lib_python) {
++    if (!_pythonpath || !_prefix || !_exec_prefix || !lib_python || !lib64_python) {
          Py_FatalError(
-@@ -683,7 +683,7 @@
-     }
-     else
-         wcsncpy(zip_path, _prefix, MAXPATHLEN);
--    joinpath(zip_path, L"lib/python00.zip");
-+    joinpath(zip_path, L"lib64/python00.zip");
-     bufsz = wcslen(zip_path);   /* Replace "00" with version */
-     zip_path[bufsz - 6] = VERSION[0];
+             "Unable to decode path variables in getpath.c: "
+             "memory error");
+@@ -689,13 +691,13 @@
      zip_path[bufsz - 5] = VERSION[2];
-@@ -695,7 +695,7 @@
+ 
+     efound = search_for_exec_prefix(argv0_path, home,
+-                                    _exec_prefix, lib_python);
++                                    _exec_prefix, lib64_python);
+     if (!efound) {
+         if (!Py_FrozenFlag)
              fprintf(stderr,
                  "Could not find platform dependent libraries <exec_prefix>\n");
          wcsncpy(exec_prefix, _exec_prefix, MAXPATHLEN);
@@ -152,9 +158,17 @@ diff -aurN Python-3.4.2.orig/Modules/getpath.c Python-3.4.2/Modules/getpath.c
      /* If we found EXEC_PREFIX do *not* reduce it!  (Yet.) */
  
 diff -aurN Python-3.4.2.orig/setup.py Python-3.4.2/setup.py
---- Python-3.4.2.orig/setup.py	2014-10-08 10:18:16.000000000 +0200
-+++ Python-3.4.2/setup.py	2015-01-05 16:52:21.639815163 +0100
-@@ -730,11 +730,11 @@
+--- Python-3.4.2.orig/setup.py	2015-02-08 20:07:32.732651827 +0100
++++ Python-3.4.2/setup.py	2015-02-08 20:38:20.647041951 +0100
+@@ -452,6 +452,7 @@
+         # 10520.
+         if not cross_compiling:
+             add_dir_to_list(self.compiler.library_dirs, '/usr/local/lib')
++            add_dir_to_list(self.compiler.library_dirs, '/usr/local/lib64')
+             add_dir_to_list(self.compiler.include_dirs, '/usr/local/include')
+         # only change this for cross builds for 3.3, issues on Mageia
+         if cross_compiling:
+@@ -730,11 +731,11 @@
              elif curses_library:
                  readline_libs.append(curses_library)
              elif self.compiler.find_library_file(lib_dirs +
